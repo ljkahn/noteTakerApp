@@ -8,86 +8,68 @@ const uuid = require('./helpers/uuid')
 const fs = require('fs');
 
 
+
 //middleware for parsing jason and urlencoded form data
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 
-//GET for homepage
+//html routes
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public.index.html'))
+})
 app.get('*', (req, res) =>
   res.sendFile(path.join(__dirname, '/public/index.html'))
 );
 
-// GET request for notes.html file
+
+app.get('/api/notes', (req, res) => {
+  sendFile(path.join(__dirname, '/public/notes.html'))
+
+});
 
 
 
+//api routes
 
-//GET for api/notes
-
-app.get('/notes', (req, res) => {
-  console.info(`GET /api/notes`);
-  res.status(200).json(db);
-
-  // Log our request to the terminal
-  console.info(`${req.method} request received to get notes`)
+app.get("/api/notes", (req, res) => {
+  fsUtils.readFromFile("./db/db.json").then((data) => {
+    console.log(JSON.parse(data));
+    res.json(JSON.parse(data));
+  });
 });
 
 
 
 app.post('/api/notes', (req, res) => {
-  // Log that a POST request was received
-
-  //get data from the front end - req.body
-  //create varaibles of that data
-  //validation - user must provide title, text, and a uuid for each note
-  //create new object of the user values 
-  //write that data to a json file
-  //confirm the data was written
-  //send a response back to client of the data 
-
-
-
-
-
   console.info(`${req.method} request received to add a note`);
 
   // Destructuring assignment for the items in req.body
   const { title, text } = req.body;
 
-  // If all the required properties are present
-  if (title && text) {
-    // Variable for the object we will save
-    const newNote = {
-      title,
-      text,
-      note_id: uuid(),
-    };
+  // Variable for the object we will save
+  const userNote = {
+    title,
+    text,
+    note_id: uuid(),
+  };
 
-    // Convert the data to a string so we can save it
-    const noteString = JSON.stringify(newNote);
+  fsUtils.readAndAppend(userNote, './db/db.json');
+  console.log(userNote);
+  res.json('Note has been added!');
 
-    // Write the string to a file
-    fs.writeFile(`./db/${newNote.product}.json`, noteString, (err) =>
-      err
-        ? console.error(err)
-        : console.log(
-          `Review for ${newNote.product} has been written to JSON file`
-        )
-    );
 
-    const response = {
-      status: 'success',
-      body: newReview,
-    };
 
-    console.log(response);
-    res.status(201).json(response);
-  } else {
-    res.status(500).json('Error in posting review');
-  }
 });
+
+//
+
+app.delete('/api/notes/:id', (req, res) => {
+  fsUtils.deleteAndAppend(req.params.id, './db/db.json')
+  res.json('Note has been deleted!')
+
+})
 
 
 
